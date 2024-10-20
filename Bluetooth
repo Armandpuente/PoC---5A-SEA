@@ -1,0 +1,43 @@
+#include "BluetoothSerial.h"
+
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+BluetoothSerial SerialBT;
+
+const int maxSongs = 5;       // Nombre maximum de chansons à stocker
+String songList[5];     // Tableau pour stocker les titres des chansons
+int songCount = 0;             // Compteur pour suivre le nombre de chansons reçues
+String receivedData = "";      // Chaîne pour stocker temporairement les données reçues
+
+void setup() {
+  Serial.begin(9600);
+  SerialBT.begin("ESP32test"); // Nom du périphérique Bluetooth
+  Serial.println("The device started, now you can pair it with bluetooth!");
+}
+
+void loop() {
+  // Vérifie si des données sont reçues via Bluetooth
+  if (SerialBT.available()) {
+      if (songCount < maxSongs) {
+        songList[songCount] = SerialBT.readString();  // Stocker le titre dans le tableau
+        Serial.println("Song received: " + songList[songCount]);  // Afficher le titre reçu
+        songCount++;  // Incrémenter le compteur de chansons
+       
+      } else {
+        Serial.println("Song list is full!");  // Si le tableau est plein
+      }
+  }
+
+  // Optionnel : Affiche la liste complète des chansons quand elle est remplie
+  if (songCount == maxSongs) {
+    Serial.println("All songs received:");
+    for (int i = 0; i < maxSongs; i++) {
+      Serial.println(songList[i]);
+    }
+    songCount++;  // Empêcher l'affichage répétitif de la liste
+  }
+
+  delay(20);
+}

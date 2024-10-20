@@ -1,0 +1,50 @@
+const int boutonPin = 4;   // Pin du bouton
+int etatBouton;            
+int dernierEtatBouton = LOW;   
+unsigned long boutonPressStart = 0;
+bool buttonPressed = false;
+const int ledPin = 2; // Pin de la LED
+#define DEEP_SLEEP_DELAY 5000 // 5 secondes pour entrer en deep sleep
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(boutonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+  
+  // Si l'ESP32 se réveille du deep sleep, allumer la LED
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {
+    Serial.println("Réveil par le bouton");
+    digitalWrite(ledPin, HIGH);  // L'ESP32 est réveillé, allumer la LED
+  } else {
+    Serial.println("Démarrage normal");
+    digitalWrite(ledPin, HIGH);  // L'ESP32 est réveillé, allumer la LED
+
+  }
+}
+
+void loop() {
+  etatBouton = digitalRead(boutonPin);
+  
+  if (etatBouton != dernierEtatBouton) {
+    if (etatBouton == HIGH) {  // Si le bouton est pressé
+        boutonPressStart = millis();  // Enregistrer le moment de l'appui
+        buttonPressed = true;
+    } else {
+      buttonPressed = false;  // Réinitialiser lorsque le bouton est relâché
+    }
+  }
+  dernierEtatBouton = etatBouton;
+
+  // Si le bouton est maintenu enfoncé pendant 5 secondes
+  if (buttonPressed && (millis() - boutonPressStart >= DEEP_SLEEP_DELAY)) {
+    digitalWrite(ledPin, LOW);  // Éteindre la LED avant d'entrer en deep sleep
+    Serial.println("Entrée en deep sleep");
+    delay(2000);
+    // Configurer le bouton pour réveiller l'ESP32
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 1);  // Réveiller lorsque le bouton est pressé
+
+    // Entrer en deep sleep
+    esp_deep_sleep_start();
+  }
+
+}

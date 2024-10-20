@@ -1,0 +1,62 @@
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+// Pins des boutons
+const int buttonNextPin = 12;  // Bouton pour avancer dans la liste
+const int buttonPrevPin = 14;  // Bouton pour reculer dans la liste
+
+// Variables pour gérer les boutons
+int buttonNextState = 0;
+int buttonPrevState = 0;
+int lastButtonNextState = 0;
+int lastButtonPrevState = 0;
+
+// Déclaration de la liste des musiques sous forme de chaînes de caractères
+String musicList[] = {
+  "Musique 1",
+  "Musique 2",
+  "Musique 3",
+  "Musique 4",
+  "Musique 5"
+};
+int listSize = sizeof(musicList) / sizeof(musicList[0]); // Taille de la liste
+
+// Index de la liste
+int currentIndex = 0;
+
+void setup() {
+  // Initialisation du port série
+  Serial.begin(9600);
+  // initialize LCD 
+  lcd.init(); 
+  // turn on LCD backlight
+  lcd.backlight(); 
+  // Initialisation des broches des boutons
+  pinMode(buttonNextPin, INPUT);  // Activer la résistance pull-up interne
+  pinMode(buttonPrevPin, INPUT);  // Activer la résistance pull-up interne
+
+  // Affichage du premier élément de la liste des musiques
+  // Serial.println("Musique sélectionnée : " + musicList[currentIndex]);
+}
+void loop() {
+  buttonNextState = digitalRead(buttonNextPin);
+  buttonPrevState = digitalRead(buttonPrevPin);
+  if (buttonNextState == LOW && lastButtonNextState == HIGH) {
+    currentIndex++;
+    if (currentIndex >= listSize) {
+      currentIndex = 0;  // Revenir au début de la liste si on dépasse la fin
+    }
+  }
+  if (buttonPrevState == LOW && lastButtonPrevState == HIGH) {
+    currentIndex--;
+    if (currentIndex < 0) {
+      currentIndex = listSize - 1;  // Revenir à la fin de la liste si on dépasse le début
+    }
+  }
+  lastButtonNextState = buttonNextState;
+  lastButtonPrevState = buttonPrevState;
+  // Petite pause pour éviter le "rebond" des boutons
+  lcd.setCursor(0,1);
+  lcd.print(musicList[currentIndex]);
+  Serial.println(musicList[currentIndex]);
+  delay(200);
+}
